@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# Inform user about installation process
+echo "[+] Beginning Installation may take longer"
+
+# Change default shell to bash
+chsh -s /bin/bash
+
+# Update package lists
+apt-get update
+
+# Upgrade the system
+apt-get dist-upgrade -y
+
+# Virtualbox Tools
+sudo apt install -y --reinstall virtualbox-guest-x11
+
+# Install XFCE desktop environment and xrdp
+apt-get install -y kali-desktop-xfce xrdp
+apt-get install xrdp
+
+# Install system utilities
+apt-get install -y preload bum flameshot
+
+# Start and enable SSH service
+systemctl start ssh.service
+systemctl enable ssh.service
+
+#### Make a backup of the .bashrc file
+cp ~/.bashrc ~/.bashrc.bak
+
+#### Customize bash prompt
+# Set custom bash prompt
+echo 'export PS1="-[\[$(tput sgr0)\]\[\033[38;5;10m\]\d\[$(tput sgr0)\]-\[$(tput sgr0)\]\[\033[38;5;10m\]\t\[$(tput sgr0)\]]-[\[$(tput sgr0)\]\[\033[38;5;214m\]\u\[$(tput sgr0)\]@\[$(tput sgr0)\]\[\033[38;5;196m\]\h\[$(tput sgr0)\]]-\n-[\[$(tput sgr0)\]\[\033[38;5;33m\]\w\[$(tput sgr0)\]]\\$ \[$(tput sgr0)\]"' >> ~/.bashrc
+
+# Disable Bluetooth to avoid potential security risks
+systemctl disable bluetooth.service
+
+# Set up firewall rules
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT  # Allow SSH
+iptables -A INPUT -p tcp --dport 3389 -j ACCEPT # Allow RDP
+iptables -A INPUT -j DROP
+
+# Save firewall rules
+iptables-save > /etc/iptables/rules.v4
+
+# Configure and start xrdp service
+systemctl enable xrdp
+systemctl start xrdp
+
+# Remove unnecessary packages
+apt-get autoremove -y
+
+echo "[+] Installation and customization completed rebooting in a moment ."
+sudo reboot -f
